@@ -1,3 +1,4 @@
+require 'spec/matchers/operator_matcher'
 require 'spec/matchers/generated_descriptions'
 require 'spec/matchers/errors'
 require 'spec/matchers/method_missing'
@@ -5,6 +6,7 @@ require 'spec/matchers/simple_matcher'
 require 'spec/matchers/be'
 require 'spec/matchers/be_close'
 require 'spec/matchers/change'
+require 'spec/matchers/match_array'
 require 'spec/matchers/eql'
 require 'spec/matchers/equal'
 require 'spec/matchers/exist'
@@ -16,7 +18,6 @@ require 'spec/matchers/raise_error'
 require 'spec/matchers/respond_to'
 require 'spec/matchers/satisfy'
 require 'spec/matchers/throw_symbol'
-require 'spec/matchers/operator_matcher'
 
 module Spec
 

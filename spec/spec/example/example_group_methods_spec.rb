@@ -145,7 +145,7 @@ module Spec
               end
             end
             example_group.should have(4).examples
-            descriptions = example_group.examples.collect {|example| example.description}
+            descriptions = example_group.examples.collect {|example| example.description.to_s}
             descriptions.should include(
               "shouldCamelCase",
               "should_any_args",
@@ -426,14 +426,13 @@ module Spec
           it "should have accessible class methods from included module" do
             mod_method_called = false
             mod = Module.new do
-              extend Spec::MetaClass
               class_methods = Module.new do
                 define_method :mod_method do
                   mod_method_called = true
                 end
               end
 
-              metaclass.class_eval do
+              self.class.class_eval do
                 define_method(:included) do |receiver|
                   receiver.extend class_methods
                 end
@@ -516,13 +515,11 @@ module Spec
           it "should call new and matches? on the class used for matching examples" do 
             example_group = Class.new(ExampleGroup) do
               it "should do something" do end
-              class << self
-                def specified_examples
-                  ["something"]
-                end
-                def to_s
-                  "TestMatcher"
-                end
+              def self.specified_examples
+                ["something"]
+              end
+              def self.to_s
+                "TestMatcher"
               end
             end
 
@@ -548,6 +545,34 @@ module Spec
             group.options[:this].should == 'hash'
           end
         end
+
+        describe "#backtrace" do        
+          it "returns the backtrace from where the example group was defined" do
+            example_group = Class.new(ExampleGroup).describe("foo") do
+              example "bar" do; end
+            end
+            example_group.backtrace.join("\n").should include("#{__FILE__}:#{__LINE__-3}")
+          end
+        end
+
+        describe "#example_group_backtrace (deprecated)" do        
+          before(:each) do
+            Kernel.stub!(:warn)
+          end
+          it "sends a deprecation warning" do
+            example_group = Class.new(ExampleGroup) {}
+            Kernel.should_receive(:warn).with(/#example_group_backtrace.*deprecated.*#backtrace instead/m)
+            example_group.example_group_backtrace
+          end
+
+          it "returns the backtrace from where the example group was defined" do
+            example_group = Class.new(ExampleGroup).describe("foo") do
+              example "bar" do; end
+            end
+            example_group.example_group_backtrace.join("\n").should include("#{__FILE__}:#{__LINE__-3}")
+          end
+        end
+
       end
     end
   end

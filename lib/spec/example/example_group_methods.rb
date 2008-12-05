@@ -3,20 +3,38 @@ module Spec
 
     module ExampleGroupMethods
       include Spec::Example::BeforeAndAfterHooks
+      
+      def self.matcher_class
+        @matcher_class
+      end
+      
+      def self.matcher_class=(matcher_class)
+        @matcher_class = matcher_class
+      end
 
-      class << self
-        attr_accessor :matcher_class
-
-        def description_text(*args)
-          args.inject("") do |result, arg|
-            result << " " unless (result == "" || arg.to_s =~ /^(\s|\.|#)/)
-            result << arg.to_s
-          end
+      def self.description_text(*args)
+        args.inject("") do |description, arg|
+          description << " " unless (description == "" || arg.to_s =~ /^(\s|\.|#)/)
+          description << arg.to_s
         end
       end
 
-      attr_reader :description_text, :description_options, :spec_path, :example_group_backtrace
+      attr_reader :description_options, :spec_path
       alias :options :description_options
+      
+      # Provides the backtrace up to where this example_group was declared.
+      def backtrace
+        @backtrace
+      end
+
+      # Deprecated - use +backtrace()+
+      def example_group_backtrace
+        Kernel.warn <<-WARNING
+ExampleGroupMethods#example_group_backtrace is deprecated and will be removed
+from a future version. Please use ExampleGroupMethods#backtrace instead.
+WARNING
+        backtrace
+      end
       
       def description_args
         @description_args ||= []
@@ -46,11 +64,12 @@ module Spec
         args << {} unless Hash === args.last
         if example_group_block
           options = args.last
-          options[:spec_path] = eval("caller(0)[1]", example_group_block) unless options[:spec_path]
+          # Ruby 1.9 - the next line uses example_group_block.binding instead of example_group_block
+          options[:spec_path] = eval("caller(0)[1]", example_group_block.binding) unless options[:spec_path]
           if options[:shared]
             create_shared_example_group(*args, &example_group_block)
           else
-            create_nested_example_group(*args, &example_group_block)
+            create_subclass(*args, &example_group_block)
           end
         else
           set_description(*args)
@@ -58,15 +77,31 @@ module Spec
       end
       alias :context :describe
       
-      def create_shared_example_group(*args, &example_group_block)
+      def create_shared_example_group(*args, &example_group_block) # :nodoc:
         SharedExampleGroup.register(*args, &example_group_block)
       end
       
-      def create_nested_example_group(*args, &example_group_block)
-        self.subclass("Subclass") do
+      def create_subclass(*args, &example_group_block) # :nodoc:
+        subclass("Subclass") do
           set_description(*args)
           module_eval(&example_group_block)
         end
+      end
+      
+      # Creates a new subclass of self, with a name "under" our own name.
+      # Example:
+      #
+      #   x = Foo::Bar.subclass('Zap'){}
+      #   x.name # => Foo::Bar::Zap_1
+      #   x.superclass.name # => Foo::Bar
+      def subclass(base_name, &body) # :nodoc:
+        @class_count ||= 0
+        @class_count += 1
+        klass = Class.new(self)
+        class_name = "#{base_name}_#{@class_count}"
+        const_set(class_name, klass)
+        klass.instance_eval(&body)
+        klass
       end
       
       # Use this to pull in examples from shared example groups.
@@ -184,7 +219,7 @@ module Spec
         @description_args = args
         @description_options = options
         @description_text = ExampleGroupMethods.description_text(*args)
-        @example_group_backtrace = options[:example_group_backtrace]
+        @backtrace = caller(1)
         @spec_path = File.expand_path(options[:spec_path]) if options[:spec_path]
         self
       end

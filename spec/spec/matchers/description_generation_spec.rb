@@ -107,6 +107,11 @@ describe "Matchers should be able to generate their own descriptions" do
     [1,2,3].should include(3)
     Spec::Matchers.generated_description.should == "should include 3"
   end
+
+  it "array.should =~ [1,2,3]" do
+    [1,2,3].should =~ [1,2,3]
+    Spec::Matchers.generated_description.should == "should contain exactly 1, 2 and 3"
+  end
   
   it "should match" do
     "this string".should match(/this string/)
@@ -130,7 +135,7 @@ describe "Matchers should be able to generate their own descriptions" do
   
   it "should respond_to" do
     [].should respond_to(:insert)
-    Spec::Matchers.generated_description.should == "should respond to #insert"
+    Spec::Matchers.generated_description.should == "should respond to [:insert]"
   end
   
   it "should throw symbol" do

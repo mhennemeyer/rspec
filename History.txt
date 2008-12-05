@@ -1,22 +1,34 @@
 === Maintenance
 
-* 3 major enhancements
+* 2 deprecations
+
+  * deprecated ExampleMethods#implementation_backtrace - use ExampleMethods#backtrace instead
+  * deprecated ExampleGroupMethods#example_group_backtrace - use ExampleGroupMethods#backtrace instead
+
+* 4 major enhancements
 
   * it { should matcher } - support for implicit receiver of #should (Joe Ferris of thoughtbot)
   * subject { ... } - works in conjunction with implicit receiver of #should
   * wrap_expectation (for wrapping multiple expectations and/or t/u assertions)
+  * added array.should =~ [1,2,3] # passes if array contains exactly the same elements in any order (Jeff Dean and Pat Maddox)
 
-* 1 minor enhancement
+* 5 minor enhancements
 
   * should throw_symbol accepts an optional argument: should throw_symbol(:sym, arg)
   * fixed --line for jruby (Zach Moazeni)
+  * assorted small changes to support Ruby 1.9 (got a way to go)
+  * removed all instances of class << self - I do know who I am
+  * SpecParser can't handle backtrace paths with colons (John-Mason P. Shackelford). Closes #505.
   
-* 2 bug fixes
+* 4 bug fixes
 
   * fixed bug where {:a => 1, :b => 2}.should include(:a, :b) failed (Yossef Mendelssohn)
-  * only try to load Test::Unit if Test::Unit is defined
+  * only try to load Test::Unit if Test::Unit is defined (not just Test)
   * Allow stubs on parent and child classes simultaneously (Jim Lindley). Fixes #600.
-
+  * BaseTextFormatter will now create the directory in a WHERE string (Adam Anderson). Fixes #616.
+  * Removed incorrect -S flag on autospec commands. Added explicit spec command for ruby to run, guarantee running rspec (raggi). Closes #507.
+  * Check whether test/unit has really been loaded before calling a method it defines (Brian Donovan). Closes #503.
+  
 === Version 1.1.11 / 2008-10-24
 
 * 1 major enhancement

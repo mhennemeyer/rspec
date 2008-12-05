@@ -134,39 +134,39 @@ module Spec
         end
       end
 
-      describe "#example_backtrace" do        
-        describe "with line_number set" do
-          with_sandboxed_options do
-            before do
-              @options.line_number = mock("irrelevant line number")
+      describe "#backtrace" do        
+        with_sandboxed_options do
+          it "returns the backtrace from where the example was defined" do
+            example_group = Class.new(ExampleGroup) do
+              example "of something" do; end
             end
             
-            it "returns the backtrace of where the implementation was defined" do
-              example_group = Class.new(ExampleGroup) do
-                it "should be instantiated in order to be asserted" do
-                end
-              end
-              
-              example = example_group.examples.first
-              example.example_backtrace.join("\n").should include("#{__FILE__}:#{__LINE__-5}")
-            end
+            example = example_group.examples.first
+            example.backtrace.join("\n").should include("#{__FILE__}:#{__LINE__-4}")
           end
         end
-        
-        describe "without line_number set" do
-          with_sandboxed_options do
-            before do
-              @options.line_number = nil
+      end
+      
+      describe "#implementation_backtrace (deprecated)" do
+        with_sandboxed_options do
+          before(:each) do
+            Kernel.stub!(:warn)
+          end
+
+          it "sends a deprecation warning" do
+            example_group = Class.new(ExampleGroup) {}
+            example = example_group.example("") {}
+            Kernel.should_receive(:warn).with(/#implementation_backtrace.*deprecated.*#backtrace instead/m)
+            example.implementation_backtrace
+          end
+          
+          it "returns the backtrace from where the example was defined" do
+            example_group = Class.new(ExampleGroup) do
+              example "of something" do; end
             end
             
-            it "returns nil" do
-              example_group = Class.new(ExampleGroup) do
-                it "should be instantiated in order to be asserted" do
-                end
-              end
-              example = example_group.examples.first
-              example.example_backtrace.should be_nil
-            end
+            example = example_group.examples.first
+            example.backtrace.join("\n").should include("#{__FILE__}:#{__LINE__-4}")
           end
         end
       end

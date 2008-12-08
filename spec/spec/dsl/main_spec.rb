@@ -38,18 +38,22 @@ module Spec
           class ::Module
             alias_method :original_included, :included
             def included(mod)
+              $foo_bar_included = (self == Foo::Bar)
               $mod = mod
             end
           end
           module Foo;module Bar;class Baz;end;end;end
           module Foo
             module Bar
-              block = lambda {Baz.new; $in_block = self}
+              block = lambda {$in_block = self}
               __send__(:describe, "The ExampleGroup", &block)
             end
           end
           $in_block.should == $mod
+          $foo_bar_included.should be_true
+          $mod = nil
           $in_block = nil
+          $foo_bar_included = nil
           RUBY_VERSION = v
           class ::Module
             alias_method :included, :original_included

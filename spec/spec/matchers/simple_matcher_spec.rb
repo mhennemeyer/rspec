@@ -89,5 +89,46 @@ module Spec
       end
     end
     
+    describe "#def_matcher(matcher_name, description="", &block)" do
+      it "should define matcher with name given as sym" do
+        def_matcher(:matcher_name, &lambda {})
+        matcher_name
+      end
+
+      it "should provide the given description" do
+        def_matcher(:matcher, "description", &lambda {})
+        matcher.description.should == "description"
+      end
+
+      describe "with attached block that evaluates to true" do
+        before do
+          @block = lambda {true}
+        end
+        it "should pass if expectation is positive" do
+          def_matcher(:matcher, "description", &@block)
+          Object.new.should matcher
+        end
+
+        it "should fail if expectation is negative" do
+          def_matcher(:matcher, "description", &@block)
+          lambda {Object.new.should_not matcher}.should fail_with(/description/)
+        end
+      end
+
+      describe "with attached block that evaluates to false" do
+        before do
+          @block = lambda {false}
+        end
+        it "should fail if expectation is positive" do
+          def_matcher(:matcher, "description", &@block)
+          lambda {Object.new.should matcher}.should fail_with(/description/)
+        end
+
+        it "should pass if expectation is negative" do
+          def_matcher(:matcher, "description", &@block)
+          Object.new.should_not matcher
+        end
+      end
+    end
   end
 end

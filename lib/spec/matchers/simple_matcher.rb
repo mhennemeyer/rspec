@@ -128,5 +128,57 @@ module Spec
     def simple_matcher(description=nil, &match_block)
       SimpleMatcher.new(description, &match_block)
     end
+    
+    # def_matcher is a convenience method that itself uses simple_matcher to 
+    # let you create your custom matchers easily
+    #
+    # The <tt>matcher_name</tt> argument will be the method name of your matcher
+    # as if you would have create it using def.
+    #
+    # The <tt>description</tt> argument will appear as part of any failure
+    # message, and is also the source for auto-generated descriptions.
+    #
+    # The <tt>block</tt> takes three arguments: The actual value, the matcher object and
+    # an array of args that will be accepted by the created matcher.
+    #
+    # The <tt>block</tt> should return a boolean: <tt>true</tt>
+    # indicates a match, which will pass if you use <tt>should</tt> and fail
+    # if you use <tt>should_not</tt>. false (or nil) indicates no match,
+    # which will do the reverse: fail if you use <tt>should</tt> and pass if
+    # you use <tt>should_not</tt>.
+    #
+    # == Example with default messages
+    # 
+    #   def_matcher :be_even, "an even number" { |given| given % 2 == 0 }
+    #                  
+    #   describe 2 do
+    #     it "should be even" do
+    #       2.should be_even
+    #     end
+    #   end
+    #
+    # Given an odd number, this example would produce an error message stating:
+    # expected "an even number", got 3.
+    #
+    # Unfortunately, if you're a fan of auto-generated descriptions, this will
+    # produce "should an even number." Not the most desirable result. You can
+    # control that using custom messages:
+    #
+    # == Example with custom messages
+    #  
+    #   def_matcher :rhyme_with do |actual, matcher, args|
+    #     matcher.description = "rhyme with #{actual.inspect}"
+    #     matcher.failure_message = "expected #{actual.inspect} to rhyme with #{args[0].inspect}"
+    #     matcher.negative_failure_message = "expected #{actual.inspect} not to rhyme with #{args[0].inspect}"
+    #     actual.rhymes_with? expected
+    #   end
+    #
+    def def_matcher(matcher_name, description="", &block)
+      self.class.send :define_method, matcher_name do |*args|
+        simple_matcher(description) do |actual, matcher|
+          block.call(actual, matcher, args)
+        end
+      end
+    end
   end
 end
